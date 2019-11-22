@@ -8,7 +8,7 @@
 
 // define kernel
 __global__ void mem_trans_ex(int *input) {
-  int tid = threadIdx.x + blockDim.x * threadIdx.y + blockDim.x * threadIdx.z;
+  int tid = threadIdx.x + blockDim.x * threadIdx.y + ((blockDim.x * blockDim.y * blockDim.z) * gridDim.y) * gridDim.z * threadIdx.z;
 
   int num_threads_per_block = blockDim.x * blockDim.y;
   int block_offset = blockIdx.x * num_threads_per_block;
@@ -16,7 +16,11 @@ __global__ void mem_trans_ex(int *input) {
   int num_threads_per_row = num_threads_per_block * gridDim.x;
   int row_offset = num_threads_per_row * blockIdx.y;
 
-  int gid = tid + block_offset + row_offset;
+  int num_threads_per_grid = num_threads_per_row * gridDim.z;
+  int grid_offset = num_threads_per_grid * blockIdx.z;
+
+  int gid = tid + block_offset + row_offset + grid_offset;
+  //int gid = tid + block_offset + row_offset;
 
   printf("blockIdx.x: %d, blockIdx.y: %d, blockIdx.z: %d, threadIdx.x: %d, threadIdx.y: %d, threadIdx.z: %d, tid: %d, gid: %d, value: %d\n", blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z, tid, gid, input[gid]);
 }
