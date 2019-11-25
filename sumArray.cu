@@ -1,10 +1,13 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-#include "cuda_common.cuh"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <cstring>
+
+
+#include "common.h"
+
 
 __global__ void sum_array_gpu(int *a, int *b, int *c, int size){
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -23,7 +26,7 @@ int main(){
 
   int size = 10000;
   int block_size = 128;
-  int NO_BYTES = (sizeof) int * size;
+  int NO_BYTES = sizeof(int) * size;
 
   // host pointers
   int *h_a, *h_b, *h_c, *gpu_results;
@@ -35,7 +38,7 @@ int main(){
 
   time_t t;
   srand((unsigned) time(&t));
-  for(int = 1; i < size; i++){
+  for(int i = 1; i < size; i++){
     h_a[i] = (int) (rand() & 0xFF);
     h_b[i] = (int) (rand() & 0xFF);
   }
@@ -60,7 +63,7 @@ int main(){
 
   cudaMemcpy(gpu_results, d_c, NO_BYTES, cudaMemcpyDeviceToHost);
 
-  
+  compare_arrays(gpu_results, h_c, size);
 
   cudaFree(d_a);
   cudaFree(d_b);
