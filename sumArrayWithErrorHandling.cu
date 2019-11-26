@@ -44,7 +44,10 @@ int main(){
     h_b[i] = (int) (rand() & 0xFF);
   }
 
+  clock_t cpu_start, cpu_end;
+  cpu_start = clock();
   sum_array_cpu(h_a, h_b, h_c, size);
+  cpu_end = clock();
 
   // device pointers
   int *d_a, *d_b, *d_c;
@@ -64,18 +67,35 @@ int main(){
     fprintf(stderr, "Error: %s\n", cudaGetErrorString(error));
   }
 
+  clock_t htod_start, htod_end;
+  htod_start = clock();
   cudaMemcpy(d_a, h_a, NO_BYTES, cudaMemcpyHostToDevice);
   cudaMemcpy(d_b, h_b, NO_BYTES, cudaMemcpyHostToDevice);
+  htod_end = clock();
 
   dim3 block(block_size);
   dim3 grid((size/block.x) + 1);
 
+  clock_t gpu_start, gpu_end;
+  gpu_start = clock();
   sum_array_gpu <<<block, grid>>>(d_a, d_b, d_c, size);
   cudaDeviceSynchronize();
+  gpu_end = clock();
 
+  clock_t dtoh_start, dtoh_end;
+  dtoh_start = clock();
   cudaMemcpy(gpu_results, d_c, NO_BYTES, cudaMemcpyDeviceToHost);
+  dtoh_end = clock();
 
   compare_arrays(gpu_results, h_c, size);
+
+
+  printf("Sum array CPU exec time: %4.6f\n",(double)((double)(cpu_end - cpu_start)/CLOCKS_PER_SEC));
+  printf("Sum array GPU exec time: %4.6f\n",(double)((double)(gpu_end - gpu_start)/CLOCKS_PER_SEC));
+  printf("H2D transfer time: %4.6f\n",(double)((double)(htod_end - htod_start)/CLOCKS_PER_SEC));
+  printf("D2H transfer time: %4.6f\n",(double)((double)(dtoh_end - dtoh_start)/CLOCKS_PER_SEC));
+
+  printf("Total GPU exec time: %4.6f\n", (double)((double)(dtoh_end - htod_start)/CLOCKS_PER_SEC));
 
   cudaFree(d_a);
   cudaFree(d_b);
