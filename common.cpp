@@ -135,7 +135,7 @@ int reduction_cpu(int *input, const int size){
 }
 
 void compare_results(int gpu_results, int cpu_results){
-  printf("GPU result: %d. CPU result: %d\n", gpu_results, cpu_results);
+  printf("GPU result: %d, CPU result: %d\n", gpu_results, cpu_results);
   if(gpu_results == cpu_results) {
     printf("GPU and CPU results are the same!\n");
     return;
