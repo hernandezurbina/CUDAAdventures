@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <cstring>
-#include <time.h>
-#include <stdlib.h>
-#include <fstream> 
+#include "common.h"
 
 //simple initialization
 void initialize(int * input, const int array_size, INIT_PARAM PARAM, int x)

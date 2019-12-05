@@ -3,9 +3,25 @@
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+#include "common.h"
 
 __global__ void reduction_neighbor_pair(int *input, int *temp, int size){
+  int tid = threadIdx.x;
+  int gid = blockDim.x * blockIdx.x + threadIdx.x;
+  if (gid > size){
+    return;
+  }
 
+  for(int offset = 1; offset <= blockDim.x/2; offset *= 2){
+    if(tid % (2 * offset) == 0){
+      input[gid] += input[gid + offset];
+    }
+    __syncthreads();
+  }
+
+  if(tid == 0){
+    temp[blockIdx.x] = input[gid];
+  }
 }
 
 int main(int argc, char **argv){
@@ -39,6 +55,25 @@ int main(int argc, char **argv){
   cudaMalloc((void **)&d_temp, temp_array_byte_size);
 
   cudaMemset(d_temp, 0, temp_array_byte_size);
+  cudaMemcpy(d_input, h_input, byte_size, cudaMemcpyHostToDevice);
+
+  reduction_neighbor_pair <<<grid, block>>>(d_input, d_temp, size);
+
+  cudaDeviceSynchronize();
+  cudaMemcpy(h_ref, d_temp, temp_array_byte_size, cudaMemcpyDeviceToHost);
+
+  int gpu_result = 0;
+  for(int i = 0; i < grid.x; i++) {
+    gpu_result += h_ref[i];
+  }
+
+  compare_results(gpu_result, cpu_result);
+
+  free(h_ref);
+  free(h_input);
+
+  cudaFree(d_temp);
+  cudaFree(d_input);
 
   cudaDeviceReset();
   return 0;
