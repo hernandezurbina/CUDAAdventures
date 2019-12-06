@@ -7,7 +7,7 @@
 #include "device_launch_parameters.h"
 
 __global__ void dynamic_parallelism_check(int size, int depth){
-  printf("Depth: %d - tid: %d\n", depth, threadIdx.x);
+  printf("Depth: %d - tid: %d - blockIdx: %d\n", depth, threadIdx.x, blockIdx.x);
   if(size == 1){
     return;
   }
@@ -18,7 +18,10 @@ __global__ void dynamic_parallelism_check(int size, int depth){
 
 int main(){
 
-  dynamic_parallelism_check <<<1, 16>>>(16, 0);
+  dim3 blockSize(16, 2);
+  dim3 gridSize(1);
+
+  dynamic_parallelism_check <<<gridSize, blockSize>>>(16, 0);
 
   cudaDeviceSynchronize();
   cudaDeviceReset();
