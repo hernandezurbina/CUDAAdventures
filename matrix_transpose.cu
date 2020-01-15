@@ -35,7 +35,30 @@ int main(){
   initialize(h_mat_array, size, INIT_ONE_TO_TEN);
 
   // matrix transpose in CPU
-  mat_transpose_cpu(h_mat_array, h_trans_array, nx, ny);
+  // mat_transpose_cpu(h_mat_array, h_trans_array, nx, ny);
+
+  int *d_mat_array, *d_trans_array;
+
+  cudaMalloc((void **) &d_mat_array, byte_size);
+  cudaMalloc((void **) &d_trans_array, byte_size);
+
+  cudaMemcpy(d_mat_array, h_mat_array, byte_size, cudaMemcpyHostToDevice);
+
+  dim3 block(block_x, block_y);
+  dim3 grid(nx/block_x, ny/block_y);
+
+  // clock_t gpu_start, gpu_end;
+  // gpu_start = clock();
+
+  transpose_read_row_write_column <<<grid, block>>>(d_mat_array, d_trans_array, nx, ny);
+
+  cudaDeviceSynchronize();
+
+  // gpu_end = clock();
+  cudaMemcpy(h_ref, d_trans_array, byte_size, cudaMemcpyDeviceToHost);
+  compare_arrays(h_ref, h_trans_array, size);
+
+  cudaDeviceReset();
 
   return 0;
 }
